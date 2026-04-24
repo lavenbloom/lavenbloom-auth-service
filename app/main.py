@@ -1,3 +1,4 @@
+from typing import Annotated
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -18,8 +19,31 @@ app = FastAPI(title="Auth Service", lifespan=lifespan)
 def health_check():
     return {"status": "ok"}
 
-@app.post("/register", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
-def register_user(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
+@app.post(
+    "/register",
+    response_model=schemas.UserResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        400: {
+            "description": "Username or email already registered",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "username_taken": {
+                            "summary": "Username already registered",
+                            "value": {"detail": "Username already registered"}
+                        },
+                        "email_taken": {
+                            "summary": "Email already registered",
+                            "value": {"detail": "Email already registered"}
+                        }
+                    }
+                }
+            }
+        }
+    }
+)
+def register_user(user: schemas.UserCreate, db: Annotated[Session, Depends(database.get_db)]):
     db_user = db.scalar(select(models.User).where(models.User.username == user.username))
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
@@ -36,7 +60,7 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(database.get_d
     return new_user
 
 @app.post("/login", response_model=schemas.Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
+def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Annotated[Session, Depends(database.get_db)]):
     user = db.scalar(select(models.User).where(models.User.username == form_data.username))
     if not user or not auth.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
