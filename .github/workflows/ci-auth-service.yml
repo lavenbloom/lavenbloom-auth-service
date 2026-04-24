@@ -33,6 +33,7 @@ jobs:
     if: github.event_name == 'pull_request'
     uses: lavenbloom/lavenbloom-shared/.github/workflows/ci-sast.yml@main
     with:
+      service-name: auth-service
       service-path: .
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
