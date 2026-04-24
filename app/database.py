@@ -1,13 +1,14 @@
 import os
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
 POSTGRES_URI = os.getenv("POSTGRES_URI", "postgresql://user:password@localhost/auth_db")
 
 engine = create_engine(POSTGRES_URI)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-Base = declarative_base()
+class Base(DeclarativeBase):
+    pass
 
 def get_db():
     db = SessionLocal()

@@ -1,13 +1,18 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 from app import models, schemas, auth, database
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
+from contextlib import asynccontextmanager
 
-# Create tables
-models.Base.metadata.create_all(bind=database.engine)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Create tables
+    models.Base.metadata.create_all(bind=database.engine)
+    yield
 
-app = FastAPI(title="Auth Service")
+app = FastAPI(title="Auth Service", lifespan=lifespan)
 
 @app.get("/health")
 def health_check():
@@ -15,11 +20,11 @@ def health_check():
 
 @app.post("/register", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
 def register_user(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
-    db_user = db.query(models.User).filter(models.User.username == user.username).first()
+    db_user = db.scalar(select(models.User).where(models.User.username == user.username))
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
     
-    db_email = db.query(models.User).filter(models.User.email == user.email).first()
+    db_email = db.scalar(select(models.User).where(models.User.email == user.email))
     if db_email:
         raise HTTPException(status_code=400, detail="Email already registered")
     
@@ -32,7 +37,7 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(database.get_d
 
 @app.post("/login", response_model=schemas.Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
-    user = db.query(models.User).filter(models.User.username == form_data.username).first()
+    user = db.scalar(select(models.User).where(models.User.username == form_data.username))
     if not user or not auth.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -41,6 +46,6 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         )
     access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = auth.create_access_token(
-        data={"sub": user.username, "id": user.id}, expires_delta=access_token_expires
+        data={"sub": user.username, "id": str(user.id)}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
