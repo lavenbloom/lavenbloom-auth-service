@@ -91,7 +91,7 @@ jobs:
     with:
       service-name: auth-service
       image-tag: ${{ needs.dev-publish.outputs.image-tag }}
-      environment: develop          # ← pushes to develop branch of charts repo
+      environment: main 
       target-env: dev               # values-dev.yaml
     secrets:
       HELM_REPO_PAT: ${{ secrets.HELM_REPO_PAT }}
