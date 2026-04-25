@@ -68,7 +68,7 @@ jobs:
       - run: echo "✅ All PR checks passed"
 
   # ═══════════════════════════════════════════════════════════════════════════
-  # DEVELOP — Publish dev image on merge
+  # DEVELOP — Publish dev image on merge + update Helm chart for dev
   # ═══════════════════════════════════════════════════════════════════════════
 
   dev-publish:
@@ -78,9 +78,23 @@ jobs:
       service-name: auth-service
       service-path: .
       environment: develop
+      target-env: dev
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+
+  dev-cd:
+    needs: [dev-publish]
+    if: needs.dev-publish.result == 'success'
+    uses: lavenbloom/lavenbloom-shared/.github/workflows/cd-template.yml@main
+    with:
+      service-name: auth-service
+      image-tag: ${{ needs.dev-publish.outputs.image-tag }}
+      environment: develop          # ← pushes to develop branch of charts repo
+      target-env: dev               # values-dev.yaml
+    secrets:
+      HELM_REPO_PAT: ${{ secrets.HELM_REPO_PAT }}
 
   # ═══════════════════════════════════════════════════════════════════════════
   # RELEASE — Publish release image + update Helm chart
@@ -93,6 +107,7 @@ jobs:
       service-name: auth-service
       service-path: .
       environment: main
+      target-env: prod             
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -105,5 +120,6 @@ jobs:
       service-name: auth-service
       image-tag: ${{ github.event.release.tag_name }}
       environment: main
+      target-env: prod               # values-prod.yaml
     secrets:
       HELM_REPO_PAT: ${{ secrets.HELM_REPO_PAT }}
