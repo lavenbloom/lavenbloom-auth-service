@@ -107,7 +107,8 @@ jobs:
       service-name: auth-service
       service-path: .
       environment: main
-      target-env: prod             
+      target-env: prod
+      release-tag: ${{ github.event.release.tag_name }}               
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -118,7 +119,7 @@ jobs:
     uses: lavenbloom/lavenbloom-shared/.github/workflows/cd-template.yml@main
     with:
       service-name: auth-service
-      image-tag: ${{ github.event.release.tag_name }}
+      image-tag: ${{ needs.publish.outputs.image-tag }}
       environment: main
       target-env: prod               # values-prod.yaml
     secrets:
