@@ -90,8 +90,9 @@ jobs:
     uses: lavenbloom/lavenbloom-shared/.github/workflows/cd-template.yml@main
     with:
       service-name: auth-service
+      service-key: authService
       image-tag: ${{ needs.dev-publish.outputs.image-tag }}
-      environment: main 
+      environment: develop
       target-env: dev               # values-dev.yaml
     secrets:
       HELM_REPO_PAT: ${{ secrets.HELM_REPO_PAT }}
