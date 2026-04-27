@@ -119,6 +119,7 @@ jobs:
     uses: lavenbloom/lavenbloom-shared/.github/workflows/cd-template.yml@main
     with:
       service-name: auth-service
+      service-key: authService
       image-tag: ${{ needs.publish.outputs.image-tag }}
       environment: main
       target-env: prod               # values-prod.yaml
