@@ -1,4 +1,4 @@
-# lavenbloom-auth-service
+# lavenbloom-auth-service #
 
 > **Runbook & Developer Walkthrough** — Authentication microservice for the Lavenbloom platform.
 
